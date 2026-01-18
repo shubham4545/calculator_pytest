@@ -1,10 +1,14 @@
-name: Test and Report
+name: Test and Report (Parallel Sharded)
 
 on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        shard: [functional, security, performance]
     
     steps:
       - uses: actions/checkout@v3
@@ -17,14 +21,53 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       
-      - name: Run tests with coverage (parallel)
-        run: pytest -n auto test_calculator.py -v --cov=calculator --cov-report=xml --junitxml=tests.xml
+      - name: Run Functional Tests (Shard 1)
+        if: matrix.shard == 'functional'
+        run: |
+          python -m pytest -n auto \
+            test_calculator.py::TestCalculatorAddition \
+            test_calculator.py::TestCalculatorSubtraction \
+            test_calculator.py::TestCalculatorMultiplication \
+            test_calculator.py::TestCalculatorDivision \
+            test_calculator.py::TestCalculatorPower \
+            test_calculator.py::TestCalculatorModulo \
+            test_calculator.py::TestCalculatorSquareRoot \
+            test_calculator.py::TestCalculatorAbsolute \
+            test_calculator.py::TestCalculatorIntegration \
+            -v --junitxml=tests-functional.xml --cov=calculator --cov-report=xml:coverage-functional.xml
       
-      - name: Upload junit results
+      - name: Run Security Tests (Shard 2)
+        if: matrix.shard == 'security'
+        run: |
+          python -m pytest -n auto \
+            test_calculator.py::TestCalculatorSecurity \
+            -v --junitxml=tests-security.xml --cov=calculator --cov-report=xml:coverage-security.xml
+      
+      - name: Run Performance & Boundary Tests (Shard 3)
+        if: matrix.shard == 'performance'
+        run: |
+          python -m pytest -n auto \
+            test_calculator.py::TestCalculatorPerformance \
+            test_calculator.py::TestCalculatorBoundaries \
+            -v --junitxml=tests-performance.xml --cov=calculator --cov-report=xml:coverage-performance.xml
+      
+      - name: Upload test results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: junit
-          path: tests.xml
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
+          name: test-results-${{ matrix.shard }}
+          path: tests-*.xml
+      
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.shard }}
+          path: coverage-*.xml
+      
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: tests-*.xml
+          check_name: Test Results (${{ matrix.shard }})
