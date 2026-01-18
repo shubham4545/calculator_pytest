@@ -1,10 +1,19 @@
 pipeline {
     agent any
 
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'https://github.com/shubham4545/calculator_pytest.git']]
+                ])
                 echo 'Source code checked out successfully'
             }
         }
@@ -13,9 +22,9 @@ pipeline {
             steps {
                 script {
                     echo 'Setting up Python environment...'
-                    sh 'python --version'
-                    sh 'pip install --upgrade pip'
-                    sh 'pip install pytest pytest-cov'
+                    bat 'python --version'
+                    bat 'pip install --upgrade pip'
+                    bat 'pip install pytest pytest-cov'
                 }
             }
         }
@@ -24,13 +33,13 @@ pipeline {
             steps {
                 script {
                     echo 'Running pytest tests with coverage...'
-                    sh '''
-                        pytest test_calculator.py \
-                            --verbose \
-                            --cov=calculator \
-                            --cov-report=xml \
-                            --cov-report=html \
-                            --junit-xml=test-results.xml \
+                    bat '''
+                        python -m pytest test_calculator.py ^
+                            --verbose ^
+                            --cov=calculator ^
+                            --cov-report=xml ^
+                            --cov-report=html ^
+                            --junit-xml=test-results.xml ^
                             --tb=short
                     '''
                 }
