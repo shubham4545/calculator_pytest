@@ -40,6 +40,18 @@ class Calculator:
             raise ValueError("Cannot calculate modulo by zero")
         return a % b
 
+    @staticmethod
+    def square_root(a):
+        """Calculate square root of a number"""
+        if a < 0:
+            raise ValueError("Cannot calculate square root of negative number")
+        return a ** 0.5
+
+    @staticmethod
+    def absolute(a):
+        """Calculate absolute value of a number"""
+        return abs(a)
+
 
 if __name__ == "__main__":
     calc = Calculator()
@@ -49,3 +61,5 @@ if __name__ == "__main__":
     print(f"10 / 5 = {calc.divide(10, 5)}")
     print(f"2 ^ 8 = {calc.power(2, 8)}")
     print(f"10 % 3 = {calc.modulo(10, 3)}")
+    print(f"√16 = {calc.square_root(16)}")
+    print(f"|-5| = {calc.absolute(-5)}")

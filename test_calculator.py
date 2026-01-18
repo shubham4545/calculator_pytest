@@ -128,6 +128,51 @@ class TestCalculatorModulo:
         assert Calculator.modulo(0, 5) == 0
 
 
+class TestCalculatorSquareRoot:
+    """Test cases for square root operation"""
+
+    def test_square_root_perfect_square(self):
+        """Test square root of perfect square"""
+        assert Calculator.square_root(16) == 4
+
+    def test_square_root_positive_number(self):
+        """Test square root of positive number"""
+        assert Calculator.square_root(2) == pytest.approx(1.414, rel=0.01)
+
+    def test_square_root_zero(self):
+        """Test square root of zero"""
+        assert Calculator.square_root(0) == 0
+
+    def test_square_root_one(self):
+        """Test square root of one"""
+        assert Calculator.square_root(1) == 1
+
+    def test_square_root_negative_number(self):
+        """Test square root of negative number raises ValueError"""
+        with pytest.raises(ValueError):
+            Calculator.square_root(-4)
+
+
+class TestCalculatorAbsolute:
+    """Test cases for absolute value operation"""
+
+    def test_absolute_positive_number(self):
+        """Test absolute value of positive number"""
+        assert Calculator.absolute(5) == 5
+
+    def test_absolute_negative_number(self):
+        """Test absolute value of negative number"""
+        assert Calculator.absolute(-5) == 5
+
+    def test_absolute_zero(self):
+        """Test absolute value of zero"""
+        assert Calculator.absolute(0) == 0
+
+    def test_absolute_float(self):
+        """Test absolute value of float"""
+        assert Calculator.absolute(-3.14) == pytest.approx(3.14)
+
+
 # Integration tests
 class TestCalculatorIntegration:
     """Integration tests for multiple operations"""
