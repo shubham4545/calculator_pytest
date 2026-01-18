@@ -18,8 +18,8 @@ pipeline {
             steps {
                 bat 'python --version'
                 bat 'pip install --upgrade pip'
-                bat 'pip install pytest pytest-cov'
-                echo '✓ Dependencies installed'
+                bat 'pip install -r requirements.txt'
+                echo '✓ Dependencies installed (from requirements.txt)'
             }
         }
         
@@ -27,7 +27,7 @@ pipeline {
             steps {
                 echo '▶ Running unit and functional tests...'
                 bat '''
-                    python -m pytest test_calculator.py::TestCalculatorAddition ^
+                    python -m pytest -n auto -v test_calculator.py::TestCalculatorAddition ^
                         test_calculator.py::TestCalculatorSubtraction ^
                         test_calculator.py::TestCalculatorMultiplication ^
                         test_calculator.py::TestCalculatorDivision ^
@@ -36,7 +36,7 @@ pipeline {
                         test_calculator.py::TestCalculatorSquareRoot ^
                         test_calculator.py::TestCalculatorAbsolute ^
                         test_calculator.py::TestCalculatorIntegration ^
-                        -v --junit-xml=test-results-functional.xml
+                        --junit-xml=test-results-functional.xml
                 '''
                 echo '✓ Unit & Functional tests completed'
             }
@@ -45,7 +45,7 @@ pipeline {
         stage('Security Tests') {
             steps {
                 echo '▶ Running security tests (injection, validation, type safety)...'
-                bat 'python -m pytest test_calculator.py::TestCalculatorSecurity -v --junit-xml=test-results-security.xml'
+                bat 'python -m pytest -n auto test_calculator.py::TestCalculatorSecurity -v --junit-xml=test-results-security.xml'
                 echo '✓ Security tests completed'
             }
         }
@@ -53,7 +53,7 @@ pipeline {
         stage('Performance & Boundary Tests') {
             steps {
                 echo '▶ Running performance and boundary tests...'
-                bat 'python -m pytest test_calculator.py::TestCalculatorPerformance test_calculator.py::TestCalculatorBoundaries -v --junit-xml=test-results-performance.xml'
+                bat 'python -m pytest -n auto test_calculator.py::TestCalculatorPerformance test_calculator.py::TestCalculatorBoundaries -v --junit-xml=test-results-performance.xml'
                 echo '✓ Performance & Boundary tests completed'
             }
         }
@@ -61,7 +61,7 @@ pipeline {
         stage('Code Coverage') {
             steps {
                 echo '▶ Generating code coverage report...'
-                bat 'python -m pytest test_calculator.py -v --cov=calculator --cov-report=xml --cov-report=html --cov-report=term'
+                bat 'python -m pytest -n auto test_calculator.py -v --cov=calculator --cov-report=xml --cov-report=html --cov-report=term'
                 echo '✓ Coverage report generated'
             }
         }

@@ -17,8 +17,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       
-      - name: Run tests with coverage
-        run: pytest test_calculator.py -v --cov=calculator --cov-report=xml
+      - name: Run tests with coverage (parallel)
+        run: pytest -n auto test_calculator.py -v --cov=calculator --cov-report=xml --junitxml=tests.xml
       
+      - name: Upload junit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit
+          path: tests.xml
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
