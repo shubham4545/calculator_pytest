@@ -3,10 +3,334 @@ Test cases for the Calculator class using pytest
 """
 
 import pytest
+import time
 from calculator import Calculator
 
 
-class TestCalculatorAddition:
+# ============================================================================
+# FIXTURES
+# ============================================================================
+
+@pytest.fixture
+def calculator():
+    """Fixture: Provides a Calculator instance"""
+    return Calculator()
+
+
+@pytest.fixture
+def sample_numbers():
+    """Fixture: Provides sample numbers for testing"""
+    return {
+        'positive': (5, 3),
+        'negative': (-5, -3),
+        'mixed': (5, -3),
+        'with_zero': (5, 0),
+        'large': (1e100, 1e100),
+        'small': (1e-100, 1e-100),
+    }
+
+
+@pytest.fixture
+def performance_timer():
+    """Fixture: Provides a context manager for performance timing"""
+    class Timer:
+        def __init__(self):
+            self.start_time = None
+            self.elapsed = None
+        
+        def __enter__(self):
+            self.start_time = time.time()
+            return self
+        
+        def __exit__(self, *args):
+            self.elapsed = time.time() - self.start_time
+        
+        def assert_under(self, max_seconds):
+            assert self.elapsed < max_seconds, f"Execution took {self.elapsed}s, expected < {max_seconds}s"
+    
+    return Timer()
+
+
+@pytest.fixture
+def malicious_inputs():
+    """Fixture: Provides malicious input patterns for security testing"""
+    return [
+        "5' OR '1'='1",  # SQL injection
+        "__import__('os').system('rm -rf /')",  # Code injection
+        "<script>alert('XSS')</script>",  # XSS
+        "; DROP TABLE users;",  # Command injection
+        "你好123",  # Unicode/encoding
+        "5\x00injection",  # Null byte
+        "9" * 10000,  # Buffer overflow
+        None,  # None value
+        [10],  # List
+        {"value": 16},  # Dict
+    ]
+
+
+# ============================================================================
+# PARAMETERIZED TESTS
+# ============================================================================
+
+class TestCalculatorAdditionParametrized:
+    """Parameterized tests for addition operation"""
+    
+    @pytest.mark.parametrize("a, b, expected", [
+        (5, 3, 8),
+        (-5, -3, -8),
+        (5, -3, 2),
+        (0, 5, 5),
+        (100, 200, 300),
+        (0, 0, 0),
+        (-1, 1, 0),
+        (1.5, 2.5, 4.0),
+    ])
+    def test_add_various_numbers(self, a, b, expected):
+        """Parameterized: Test addition with various number combinations"""
+        result = Calculator.add(a, b)
+        if isinstance(expected, float):
+            assert result == pytest.approx(expected)
+        else:
+            assert result == expected
+
+
+class TestCalculatorSubtractionParametrized:
+    """Parameterized tests for subtraction operation"""
+    
+    @pytest.mark.parametrize("a, b, expected", [
+        (10, 3, 7),
+        (-5, -3, -2),
+        (5, -3, 8),
+        (5, 0, 5),
+        (0, 5, -5),
+        (100, 100, 0),
+        (3.5, 1.5, 2.0),
+    ])
+    def test_subtract_various_numbers(self, a, b, expected):
+        """Parameterized: Test subtraction with various number combinations"""
+        result = Calculator.subtract(a, b)
+        if isinstance(expected, float):
+            assert result == pytest.approx(expected)
+        else:
+            assert result == expected
+
+
+class TestCalculatorMultiplicationParametrized:
+    """Parameterized tests for multiplication operation"""
+    
+    @pytest.mark.parametrize("a, b, expected", [
+        (5, 3, 15),
+        (-5, -3, 15),
+        (5, -3, -15),
+        (5, 0, 0),
+        (0, 0, 0),
+        (10, 10, 100),
+        (2.5, 4, 10.0),
+        (-1, -1, 1),
+    ])
+    def test_multiply_various_numbers(self, a, b, expected):
+        """Parameterized: Test multiplication with various number combinations"""
+        result = Calculator.multiply(a, b)
+        if isinstance(expected, float):
+            assert result == pytest.approx(expected)
+        else:
+            assert result == expected
+
+
+class TestCalculatorDivisionParametrized:
+    """Parameterized tests for division operation"""
+    
+    @pytest.mark.parametrize("a, b, expected", [
+        (10, 2, 5),
+        (-10, -2, 5),
+        (10, -2, -5),
+        (5, 2, 2.5),
+        (1, 3, pytest.approx(0.333333, rel=0.01)),
+        (100, 10, 10),
+    ])
+    def test_divide_various_numbers(self, a, b, expected):
+        """Parameterized: Test division with various number combinations"""
+        result = Calculator.divide(a, b)
+        assert result == expected
+    
+    @pytest.mark.parametrize("a, b", [
+        (10, 0),
+        (0, 0),
+        (-5, 0),
+    ])
+    def test_divide_by_zero_various(self, a, b):
+        """Parameterized: Test division by zero raises ValueError"""
+        with pytest.raises(ValueError):
+            Calculator.divide(a, b)
+
+
+class TestCalculatorPowerParametrized:
+    """Parameterized tests for power operation"""
+    
+    @pytest.mark.parametrize("base, exponent, expected", [
+        (2, 3, 8),
+        (5, 0, 1),
+        (2, -2, 0.25),
+        (10, 2, 100),
+        (-2, 2, 4),
+        (-2, 3, -8),
+        (1, 100, 1),
+    ])
+    def test_power_various_bases_exponents(self, base, exponent, expected):
+        """Parameterized: Test power with various bases and exponents"""
+        result = Calculator.power(base, exponent)
+        assert result == pytest.approx(expected)
+
+
+class TestCalculatorModuloParametrized:
+    """Parameterized tests for modulo operation"""
+    
+    @pytest.mark.parametrize("a, b, expected", [
+        (10, 3, 1),
+        (-10, 3, 2),
+        (0, 5, 0),
+        (7, 7, 0),
+        (15, 4, 3),
+    ])
+    def test_modulo_various_numbers(self, a, b, expected):
+        """Parameterized: Test modulo with various number combinations"""
+        result = Calculator.modulo(a, b)
+        assert result == expected
+    
+    @pytest.mark.parametrize("a, b", [
+        (10, 0),
+        (0, 0),
+        (-5, 0),
+    ])
+    def test_modulo_by_zero_various(self, a, b):
+        """Parameterized: Test modulo by zero raises ValueError"""
+        with pytest.raises(ValueError):
+            Calculator.modulo(a, b)
+
+
+class TestCalculatorSquareRootParametrized:
+    """Parameterized tests for square root operation"""
+    
+    @pytest.mark.parametrize("value, expected", [
+        (16, 4),
+        (25, 5),
+        (0, 0),
+        (1, 1),
+        (4, 2),
+        (2, pytest.approx(1.414, rel=0.01)),
+        (100, 10),
+    ])
+    def test_square_root_various_values(self, value, expected):
+        """Parameterized: Test square root with various values"""
+        result = Calculator.square_root(value)
+        assert result == expected
+    
+    @pytest.mark.parametrize("negative_value", [
+        -1,
+        -4,
+        -16,
+        -0.5,
+    ])
+    def test_square_root_negative_various(self, negative_value):
+        """Parameterized: Test square root of negative numbers raises ValueError"""
+        with pytest.raises(ValueError):
+            Calculator.square_root(negative_value)
+
+
+class TestCalculatorAbsoluteParametrized:
+    """Parameterized tests for absolute value operation"""
+    
+    @pytest.mark.parametrize("value, expected", [
+        (5, 5),
+        (-5, 5),
+        (0, 0),
+        (-3.14, pytest.approx(3.14)),
+        (3.14, 3.14),
+        (-100, 100),
+        (100, 100),
+    ])
+    def test_absolute_various_values(self, value, expected):
+        """Parameterized: Test absolute value with various values"""
+        result = Calculator.absolute(value)
+        assert result == expected
+
+
+class TestCalculatorSecurityParametrized:
+    """Parameterized security tests for injection prevention"""
+    
+    @pytest.mark.parametrize("malicious_input", [
+        "5' OR '1'='1",  # SQL injection
+        "__import__('os').system('rm -rf /')",  # Code injection
+        "<script>alert('XSS')</script>",  # XSS
+        "; DROP TABLE users;",  # Command injection
+        "你好123",  # Unicode/encoding
+        "5\x00injection",  # Null byte
+    ])
+    def test_string_injection_rejection(self, malicious_input):
+        """Parameterized: Test string injection attempts are rejected"""
+        with pytest.raises((TypeError, ValueError)):
+            Calculator.add(malicious_input, 5)
+    
+    @pytest.mark.parametrize("malicious_input", [
+        None,
+        [10],
+        {"value": 16},
+        (1, 2),
+        {1, 2, 3},
+    ])
+    def test_type_injection_rejection(self, malicious_input):
+        """Parameterized: Test non-numeric type attempts are rejected"""
+        with pytest.raises((TypeError, ValueError)):
+            Calculator.add(malicious_input, 5)
+    
+    @pytest.mark.parametrize("function, args", [
+        (Calculator.multiply, ("5 + 5", 2)),
+        (Calculator.divide, ("10/2", 1)),
+        (Calculator.power, ("2", "10")),
+        (Calculator.modulo, ([10], 3)),
+        (Calculator.square_root, ({"value": 16},)),
+        (Calculator.absolute, (["value"],)),
+    ])
+    def test_operation_type_validation(self, function, args):
+        """Parameterized: Test all operations validate input types"""
+        with pytest.raises((TypeError, ValueError)):
+            function(*args)
+
+
+class TestCalculatorBoundariesParametrized:
+    """Parameterized boundary and edge case tests"""
+    
+    @pytest.mark.parametrize("operation, a, b, exception_type", [
+        (Calculator.divide, 5, 0, ValueError),
+        (Calculator.modulo, 10, 0, ValueError),
+    ])
+    def test_zero_divisor_rejection(self, operation, a, b, exception_type):
+        """Parameterized: Test zero divisor rejection across operations"""
+        with pytest.raises(exception_type):
+            operation(a, b)
+    
+    @pytest.mark.parametrize("large_value", [
+        1e308,
+        -1e308,
+        1.7976931348623157e+308,
+        -1.7976931348623157e+308,
+    ])
+    def test_extreme_values_handling(self, large_value):
+        """Parameterized: Test extreme value handling"""
+        result = Calculator.add(large_value, 0)
+        assert result == large_value
+    
+    @pytest.mark.parametrize("special_value", [
+        float('inf'),
+        float('-inf'),
+    ])
+    def test_special_float_values(self, special_value):
+        """Parameterized: Test special float value handling"""
+        result = Calculator.add(special_value, 1)
+        assert result == special_value
+
+
+
     """Test cases for addition operation"""
 
     def test_add_positive_numbers(self):
