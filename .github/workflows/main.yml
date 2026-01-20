@@ -51,6 +51,16 @@ jobs:
             test_calculator.py::TestCalculatorBoundaries \
             -v --junitxml=tests-performance.xml --cov=calculator --cov-report=xml:coverage-performance.xml
       
+      - name: Validate Excel Test Data
+        run: |
+          python scripts/manage_excel_data.py validate
+          python scripts/manage_excel_data.py info
+      
+      - name: Run Excel-Driven Tests (All Shards)
+        run: |
+          python -m pytest -n auto test_excel_driven.py \
+            -v --junitxml=tests-excel.xml --cov=calculator --cov-report=xml:coverage-excel.xml
+      
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4

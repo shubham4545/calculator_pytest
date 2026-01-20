@@ -58,10 +58,24 @@ pipeline {
             }
         }
         
+        stage('Excel-Driven Tests') {
+            steps {
+                echo '▶ Loading and validating Excel test data...'
+                bat '''
+                    python scripts/manage_excel_data.py validate
+                    echo.
+                    python scripts/manage_excel_data.py info
+                '''
+                echo '▶ Running Excel-driven parameterized tests...'
+                bat 'python -m pytest -n auto test_excel_driven.py -v --junit-xml=test-results-excel.xml'
+                echo '✓ Excel-driven tests completed'
+            }
+        }
+        
         stage('Code Coverage') {
             steps {
                 echo '▶ Generating code coverage report...'
-                bat 'python -m pytest -n auto test_calculator.py -v --cov=calculator --cov-report=xml --cov-report=html --cov-report=term'
+                bat 'python -m pytest -n auto test_calculator.py test_excel_driven.py -v --cov=calculator --cov-report=xml --cov-report=html --cov-report=term'
                 echo '✓ Coverage report generated'
             }
         }
