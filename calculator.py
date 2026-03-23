@@ -20,7 +20,7 @@ class Calculator:
             raise TypeError("Input must be a number, not string")
         if b is not None and isinstance(b, str):
             raise TypeError("Input must be a number, not string")
-        
+        #Comment
         # Check for None values
         if a is None or (b is not None and b is None):
             raise TypeError("Input cannot be None")
